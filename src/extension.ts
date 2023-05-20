@@ -273,6 +273,13 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }
     });
+
+
+    vscode.commands.registerCommand('vscode-edge-devtools-view.OpenHuaweiDiscount',(e)=>{
+        console.log(e,'~~~~~~~~~~~~~~~~~~~~~~~~~~');
+        vscode.window.showErrorMessage(e,'eeeeeeeeeeeeeeeeeeeeeeee')
+        vscode.commands.executeCommand(`vscode-edge-devtools-view.launchScreencast`,vscode.Uri.parse('https://activity.huaweicloud.com/remoteshell_discount.html'))
+    })
 }
 
 function startWebhint(context: vscode.ExtensionContext): void {
