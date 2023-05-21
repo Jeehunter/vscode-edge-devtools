@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import {html, render} from 'lit-html';
+import { html, render } from 'lit-html';
 
 import { ScreencastCDPConnection, vscode } from './cdp';
 import { MouseEventMap, ScreencastInputHandler } from './input';
 import DimensionComponent from './dimensionComponent';
 import { getEmulatedDeviceDetails, groupEmulatedDevicesByType } from './emulatedDeviceHelpers';
-import FlyoutMenuComponent, {OffsetDirection} from './flyoutMenuComponent';
+import FlyoutMenuComponent, { OffsetDirection } from './flyoutMenuComponent';
 
 import { encodeMessageForChannel } from '../common/webviewEvents';
 
@@ -31,6 +31,8 @@ export class Screencast {
     private toolbar: HTMLElement;
     private emulationBar: HTMLElement;
     private inactiveOverlay: HTMLElement;
+    private tabsbar: HTMLElement;
+
     private emulatedWidth = 0;
     private emulatedHeight = 0;
     private inspectMode = false;
@@ -51,6 +53,8 @@ export class Screencast {
         this.emulationBar = document.getElementById('emulation-bar') as HTMLElement;
         this.inactiveOverlay = document.getElementById('inactive-overlay') as HTMLElement;
 
+        this.tabsbar = document.getElementById('tabsbar') as HTMLElement;
+
         this.backButton.addEventListener('click', () => this.onBackClick());
         this.forwardButton.addEventListener('click', () => this.onForwardClick());
         this.inspectButton.addEventListener('click', () => this.onInspectClick());
@@ -68,7 +72,7 @@ export class Screencast {
                 {
                     onItemSelected: this.onDeviceSelected,
                     menuItems: [
-                        {name: 'Responsive', value: 'responsive'}
+                        { name: 'Responsive', value: 'responsive' }
                     ]
                 },
                 {
@@ -94,54 +98,54 @@ export class Screencast {
 
         render(html`
             ${new FlyoutMenuComponent({
-                iconName: 'codicon-wand',
-                title: 'Emulate CSS media features',
-                offsetDirection: OffsetDirection.Right,
-                menuItemSections: [
-                    {
-                        onItemSelected: this.onEmulatedMediaSelected, 
-                        menuItems: [
-                            {name: 'No media type emulation', value: ''},
-                            {name: 'screen', value: 'screen'},
-                            {name: 'print', value: 'print'}
-                        ],
-                    },
-                    {
-                        onItemSelected: this.onPrefersColorSchemeSelected, 
-                        menuItems: [
-                            {name: 'No prefers-color-scheme emulation', value: ''},
-                            {name: 'prefers-color-scheme: light', value: 'light'},
-                            {name: 'prefers-color-scheme: dark', value: 'dark'},
-                        ]
-                    },
-                    {
-                        onItemSelected: this.onForcedColorsSelected, 
-                        menuItems: [
-                            {name: 'No forced-colors emulation', value: ''},
-                            {name: 'forced-colors: none', value: 'none'},
-                            {name: 'forced-colors: active', value: 'active'}
-                        ]
-                    }
-                ]
-            }).template()}
+            iconName: 'codicon-wand',
+            title: 'Emulate CSS media features',
+            offsetDirection: OffsetDirection.Right,
+            menuItemSections: [
+                {
+                    onItemSelected: this.onEmulatedMediaSelected,
+                    menuItems: [
+                        { name: 'No media type emulation', value: '' },
+                        { name: 'screen', value: 'screen' },
+                        { name: 'print', value: 'print' }
+                    ],
+                },
+                {
+                    onItemSelected: this.onPrefersColorSchemeSelected,
+                    menuItems: [
+                        { name: 'No prefers-color-scheme emulation', value: '' },
+                        { name: 'prefers-color-scheme: light', value: 'light' },
+                        { name: 'prefers-color-scheme: dark', value: 'dark' },
+                    ]
+                },
+                {
+                    onItemSelected: this.onForcedColorsSelected,
+                    menuItems: [
+                        { name: 'No forced-colors emulation', value: '' },
+                        { name: 'forced-colors: none', value: 'none' },
+                        { name: 'forced-colors: active', value: 'active' }
+                    ]
+                }
+            ]
+        }).template()}
             ${new FlyoutMenuComponent({
-                iconName: 'codicon-eye',
-                title: 'Emulate vision deficiencies',
-                offsetDirection: OffsetDirection.Right,
-                menuItemSections: [
-                    {
-                        onItemSelected: this.onVisionDeficiencySelected,
-                        menuItems: [
-                            {name: 'No vision deficiency emulation', value: 'none'},
-                            {name: 'Blurred vision', value: 'blurredVision'},
-                            {name: 'Protanopia', value: 'protanopia'},
-                            {name: 'Deuteranopia', value: 'deuteranopia'},
-                            {name: 'Tritanopia', value: 'tritanopia'},
-                            {name: 'Achromatopsia', value: 'achromatopsia'},
-                        ]
-                    }
-                ]
-            }).template()}
+            iconName: 'codicon-eye',
+            title: 'Emulate vision deficiencies',
+            offsetDirection: OffsetDirection.Right,
+            menuItemSections: [
+                {
+                    onItemSelected: this.onVisionDeficiencySelected,
+                    menuItems: [
+                        { name: 'No vision deficiency emulation', value: 'none' },
+                        { name: 'Blurred vision', value: 'blurredVision' },
+                        { name: 'Protanopia', value: 'protanopia' },
+                        { name: 'Deuteranopia', value: 'deuteranopia' },
+                        { name: 'Tritanopia', value: 'tritanopia' },
+                        { name: 'Achromatopsia', value: 'achromatopsia' },
+                    ]
+                }
+            ]
+        }).template()}
         `, document.getElementById('emulation-bar-left')!);
 
         this.cdpConnection.registerForEvent('Page.frameNavigated', result => this.onFrameNavigated(result));
@@ -197,7 +201,7 @@ export class Screencast {
 
     private updateHistory(): void {
         this.cdpConnection.sendMessageToBackend('Page.getNavigationHistory', {}, result => {
-            const {currentIndex, entries} = result;
+            const { currentIndex, entries } = result;
             this.history = entries;
             this.historyIndex = currentIndex;
             this.backButton.disabled = this.historyIndex < 1;
@@ -241,7 +245,7 @@ export class Screencast {
             }
             if (device.modes) {
                 const defaultDeviceMode = device.modes.find((mode) => mode.title === 'default');
-                
+
                 if (!defaultDeviceMode) {
                     throw new Error(`No default device mode in \`modes\` property for ${device.title}`);
                 }
@@ -265,7 +269,7 @@ export class Screencast {
     };
 
     private onVisionDeficiencySelected = (value: string) => {
-        this.cdpConnection.sendMessageToBackend('Emulation.setEmulatedVisionDeficiency', {type: value});
+        this.cdpConnection.sendMessageToBackend('Emulation.setEmulatedVisionDeficiency', { type: value });
         this.sendEmulationTelemetry('visionDeficiency', value);
     };
 
@@ -294,14 +298,14 @@ export class Screencast {
     }
 
     private updateMediaFeatures = () => {
-        let features = [] as {name: string, value: string}[];
+        let features = [] as { name: string, value: string }[];
         this.mediaFeatureConfig.forEach((value, name) => {
-            features.push({name, value});
-        }); 
+            features.push({ name, value });
+        });
         const payload = {
             features,
             media: this.emulatedMedia
-            
+
         };
         this.cdpConnection.sendMessageToBackend('Emulation.setEmulatedMedia', payload);
     };
@@ -319,18 +323,18 @@ export class Screencast {
     private onBackClick(): void {
         if (this.historyIndex > 0) {
             const entryId = this.history[this.historyIndex - 1].id;
-            this.cdpConnection.sendMessageToBackend('Page.navigateToHistoryEntry', {entryId})
+            this.cdpConnection.sendMessageToBackend('Page.navigateToHistoryEntry', { entryId })
         }
     }
 
     private onForwardClick(): void {
         if (this.historyIndex < this.history.length - 1) {
             const entryId = this.history[this.historyIndex + 1].id;
-            this.cdpConnection.sendMessageToBackend('Page.navigateToHistoryEntry', {entryId})
+            this.cdpConnection.sendMessageToBackend('Page.navigateToHistoryEntry', { entryId })
         }
     }
 
-    private onFrameNavigated({frame}: any): void {
+    private onFrameNavigated({ frame }: any): void {
         if (!frame.parentId) {
             this.updateHistory();
         }
@@ -358,21 +362,21 @@ export class Screencast {
                 url = 'http://' + url;
             }
 
-            this.cdpConnection.sendMessageToBackend('Page.navigate', {url});
+            this.cdpConnection.sendMessageToBackend('Page.navigate', { url });
         }
     }
 
-    private onScreencastFrame({data, sessionId}: any): void {
+    private onScreencastFrame({ data, sessionId }: any): void {
         const expectedRatio = this.emulatedWidth / this.emulatedHeight;
         const actualRatio = this.screencastImage.naturalWidth / this.screencastImage.naturalHeight;
         this.screencastImage.src = `data:image/png;base64,${data}`;
         if (expectedRatio !== actualRatio) {
             this.updateEmulation();
         }
-        this.cdpConnection.sendMessageToBackend('Page.screencastFrameAck', {sessionId});
+        this.cdpConnection.sendMessageToBackend('Page.screencastFrameAck', { sessionId });
     }
 
-    private onScreencastVisibilityChanged({visible}: {visible: boolean}): void {
+    private onScreencastVisibilityChanged({ visible }: { visible: boolean }): void {
         this.inactiveOverlay.hidden = visible;
     }
 
@@ -405,7 +409,7 @@ export class Screencast {
 
     private pasteClipboardContents(message: string) {
         this.cdpConnection.sendMessageToBackend('Runtime.evaluate', {
-            expression: `document.execCommand("insertText", false, "${message.replace(/"/g,'\\"')}");`,
+            expression: `document.execCommand("insertText", false, "${message.replace(/"/g, '\\"')}");`,
         });
     }
 

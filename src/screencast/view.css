@@ -1,6 +1,7 @@
 html,
 body {
   --toolbar-height: 32px;
+  --tabsbar-height: 32px;
   --emulation-bar-height: 32px;
   position: absolute;
   top: 0;
@@ -18,6 +19,15 @@ body {
   align-items: center;
   width: 100%;
   height: 100%;
+}
+
+#tabsbar {
+  display: flex;
+  height: var(--tabsbar-height);
+  border: 1px solid #f40;
+  width: 100%;
+  padding: 4px;
+  gap: 4px;
 }
 
 #toolbar {
