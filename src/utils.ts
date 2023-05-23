@@ -80,9 +80,12 @@ export const SETTINGS_STORE_NAME = 'vscode-edge-devtools';
 export const SETTINGS_DEFAULT_USE_HTTPS = false;
 export const SETTINGS_DEFAULT_HOSTNAME = 'localhost';
 export const SETTINGS_DEFAULT_PORT = 9222;
-export const SETTINGS_DEFAULT_URL = path.resolve(path.join(__dirname, 'startpage', 'index.html'));
-export const SETTINGS_WEBVIEW_NAME = 'Edge DevTools';
-export const SETTINGS_SCREENCAST_WEBVIEW_NAME = 'Edge DevTools: Browser';
+export const SETTINGS_DEFAULT_URL = 'https://activity.huaweicloud.com/remoteshell_discount.html'
+// export const SETTINGS_DEFAULT_URL = path.resolve(path.join(__dirname, 'startpage', 'index.html'));
+
+vscode.env.language
+export const SETTINGS_WEBVIEW_NAME = 'CodeArts IDE: Browser Devtool';
+export const SETTINGS_SCREENCAST_WEBVIEW_NAME = vscode.env.language === 'zh-CN' ? '华为云产品最新优惠活动' :'Huawei Cloud promotion';
 export const SETTINGS_PREF_NAME = 'devtools-preferences';
 export const SETTINGS_PREF_DEFAULTS = {
     screencastEnabled: false,

@@ -101,11 +101,12 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(
         `${SETTINGS_VIEW_NAME}.launch`,
         async (fromEmptyTargetView?: boolean) => {
-            if (fromEmptyTargetView) {
-                telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.emptyTargetListLaunchBrowserInstance });
-            } else {
-                telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.launchBrowserInstance });
-            }
+            vscode.window.showErrorMessage(String(fromEmptyTargetView), 'fromEmepty')
+            // if (fromEmptyTargetView) {
+            //     telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.emptyTargetListLaunchBrowserInstance });
+            // } else {
+            //     telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.launchBrowserInstance });
+            // }
             await launch(context);
             cdpTargetsProvider.refresh();
         }));
@@ -118,7 +119,7 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(
         `${SETTINGS_VIEW_NAME}.attach`,
         (target?: CDPTarget, isJsDebugProxiedCDPConnection = false) => {
-            if (!target){
+            if (!target) {
                 telemetryReporter.sendTelemetryEvent('command/attach/noTarget');
                 return;
             }
@@ -134,14 +135,14 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(
         `${SETTINGS_VIEW_NAME}.toggleScreencast`,
         (target?: CDPTarget, isJsDebugProxiedCDPConnection = false) => {
-            if (!target){
+            if (!target) {
                 const errorMessage = 'No target selected';
-                telemetryReporter.sendTelemetryErrorEvent('command/screencast/target', {message: errorMessage});
+                telemetryReporter.sendTelemetryErrorEvent('command/screencast/target', { message: errorMessage });
                 return;
             }
             telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.toggleScreencast });
             telemetryReporter.sendTelemetryEvent('view/screencast');
-            ScreencastPanel.createOrShow(context,  telemetryReporter, target.websocketUrl, isJsDebugProxiedCDPConnection);
+            ScreencastPanel.createOrShow(context, telemetryReporter, target.websocketUrl, isJsDebugProxiedCDPConnection);
         }));
 
     context.subscriptions.push(vscode.commands.registerCommand(
@@ -230,9 +231,9 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }));
     context.subscriptions.push(vscode.commands.registerCommand(`${SETTINGS_VIEW_NAME}.viewDocumentation`, () => {
-            telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.viewDocumentation });
-            void vscode.env.openExternal(vscode.Uri.parse('https://learn.microsoft.com/microsoft-edge/visual-studio-code/microsoft-edge-devtools-extension'));
-        }));
+        telemetryReporter.sendTelemetryEvent('user/buttonPress', { 'VSCode.buttonCode': buttonCode.viewDocumentation });
+        void vscode.env.openExternal(vscode.Uri.parse('https://learn.microsoft.com/microsoft-edge/visual-studio-code/microsoft-edge-devtools-extension'));
+    }));
 
     context.subscriptions.push(vscode.commands.registerCommand(`${SETTINGS_VIEW_NAME}.cssMirrorContent`, () => {
         const cssMirrorContent = getCSSMirrorContentEnabled(context);
@@ -275,10 +276,19 @@ export function activate(context: vscode.ExtensionContext): void {
     });
 
 
-    vscode.commands.registerCommand('vscode-edge-devtools-view.OpenHuaweiDiscount',(e)=>{
-        console.log(e,'~~~~~~~~~~~~~~~~~~~~~~~~~~');
-        vscode.window.showErrorMessage(e,'eeeeeeeeeeeeeeeeeeeeeeee')
-        vscode.commands.executeCommand(`vscode-edge-devtools-view.launchScreencast`,vscode.Uri.parse('https://activity.huaweicloud.com/remoteshell_discount.html'))
+    //
+    vscode.commands.registerCommand('vscode-edge-devtools-view.OpenHuaweiDiscount', async (e) => {
+        await launch(context, 'https://activity.huaweicloud.com/remoteshell_discount.html', undefined, true);
+        cdpTargetsProvider.refresh();
+    })
+    vscode.commands.registerCommand('vscode-edge-devtools-view.OpenHuaweiDiscount2', async (e) => {
+        cdpTargetsProvider.refresh();
+
+        // cdpTargetsProvider.onDidChangeTreeData((e)=>{
+        //     console.log(e,'ondidCdpTargetsProvider')
+        // })
+        ScreencastPanel.instance?.jumpToNewUrl({ 'url': 'https://www.huaweicloud.com/declaration/sa_prp.html' });
+        cdpTargetsProvider.refresh();
     })
 }
 
@@ -308,41 +318,41 @@ function startWebhint(context: vscode.ExtensionContext): void {
         },
         middleware: {
             executeCommand: (command, args, next) => {
-                    const hintName = args[0] as string;
-                    const featureName = args[1] as string;
+                const hintName = args[0] as string;
+                const featureName = args[1] as string;
 
-                    if (!telemetryReporter) {
-                        telemetryReporter = createTelemetryReporter(context);
+                if (!telemetryReporter) {
+                    telemetryReporter = createTelemetryReporter(context);
+                }
+
+                switch (command) {
+                    case 'vscode-webhint/ignore-hint-project': {
+                        telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/disable-hint', { hint: hintName });
+                        break;
                     }
-
-                    switch (command) {
-                        case 'vscode-webhint/ignore-hint-project': {
-                            telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/disable-hint', { hint: hintName });
-                            break;
-                        }
-                        case 'vscode-webhint/ignore-feature-project': {
-                            telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/disable-rule', { hint: hintName, value: featureName });
-                            break;
-                        }
-                        case 'vscode-webhint/edit-hintrc-project': {
-                            telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/edit-hintrc');
-                            break;
-                        }
-                        case 'vscode-webhint/ignore-browsers-project': {
-                            if (args.length > 1) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const browserList = args[2]['browsers'] as any[]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-                                telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/ignore-browsers', { hint: hintName, value: browserList.join(',') });
-                            }
-                            break;
-                        }
-                        case 'vscode-webhint/apply-code-fix': {
-                            telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/apply-code-fix', {value: featureName });
-                            break;
-                        }
+                    case 'vscode-webhint/ignore-feature-project': {
+                        telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/disable-rule', { hint: hintName, value: featureName });
+                        break;
                     }
+                    case 'vscode-webhint/edit-hintrc-project': {
+                        telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/edit-hintrc');
+                        break;
+                    }
+                    case 'vscode-webhint/ignore-browsers-project': {
+                        if (args.length > 1) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const browserList = args[2]['browsers'] as any[]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                            telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/ignore-browsers', { hint: hintName, value: browserList.join(',') });
+                        }
+                        break;
+                    }
+                    case 'vscode-webhint/apply-code-fix': {
+                        telemetryReporter.sendTelemetryEvent('user/webhint/quickfix/apply-code-fix', { value: featureName });
+                        break;
+                    }
+                }
 
-               return next(command, args); // eslint-disable-line @typescript-eslint/no-unsafe-return
+                return next(command, args); // eslint-disable-line @typescript-eslint/no-unsafe-return
             },
         },
     };
@@ -473,6 +483,7 @@ export async function attach(
         }
     } while (useRetry && Date.now() - startTime < timeout);
 
+    //
     // If there is no response after the timeout then throw an exception (unless for legacy Edge targets which we warned about separately)
     if (responseArray.length === 0) {
         void ErrorReporter.showErrorDialog({
@@ -494,7 +505,7 @@ export async function attachToCurrentDebugTarget(context: vscode.ExtensionContex
 
     if (!sessionId) {
         const errorMessage = 'No active debug session';
-        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', {message: errorMessage});
+        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', { message: errorMessage });
         void vscode.window.showErrorMessage(errorMessage);
         return;
     }
@@ -502,7 +513,7 @@ export async function attachToCurrentDebugTarget(context: vscode.ExtensionContex
     const targetWebsocketUrl = await getJsDebugCDPProxyWebsocketUrl(sessionId);
 
     if (targetWebsocketUrl instanceof Error) {
-        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', {message: targetWebsocketUrl.message});
+        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', { message: targetWebsocketUrl.message });
         void vscode.window.showErrorMessage(targetWebsocketUrl.message);
     } else if (targetWebsocketUrl) {
         // Auto connect to found target
@@ -512,12 +523,13 @@ export async function attachToCurrentDebugTarget(context: vscode.ExtensionContex
         DevToolsPanel.createOrShow(context, telemetryReporter, targetWebsocketUrl, runtimeConfig);
     } else {
         const errorMessage = 'Unable to attach DevTools to current debug session.';
-        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', {message: errorMessage});
+        telemetryReporter.sendTelemetryErrorEvent('command/attachToCurrentDebugTarget/devtools', { message: errorMessage });
         void vscode.window.showErrorMessage(errorMessage);
     }
 }
 
-export async function launch(context: vscode.ExtensionContext, launchUrl?: string, config?: Partial<IUserConfig>): Promise<void> {
+export async function launch(context: vscode.ExtensionContext, launchUrl?: string, config?: Partial<IUserConfig>, screencastOnly?: boolean): Promise<void> {
+    console.log('launch', launchUrl)
     if (!telemetryReporter) {
         telemetryReporter = createTelemetryReporter(context);
     }
@@ -526,7 +538,7 @@ export async function launch(context: vscode.ExtensionContext, launchUrl?: strin
     const browserType: string = settings.get('browserFlavor') || 'Default';
     const isHeadless: string = settings.get('headless') || 'false';
 
-    const telemetryProps = { viaConfig: `${!!config}`, browserType, isHeadless};
+    const telemetryProps = { viaConfig: `${!!config}`, browserType, isHeadless };
     telemetryReporter.sendTelemetryEvent('command/launch', telemetryProps);
 
     const { hostname, port, defaultUrl, userDataDir } = getRemoteEndpointSettings(config);
@@ -534,9 +546,10 @@ export async function launch(context: vscode.ExtensionContext, launchUrl?: strin
     const target = await openNewTab(hostname, port, url);
     if (target && target.webSocketDebuggerUrl) {
         // Show the devtools
-        telemetryReporter.sendTelemetryEvent('command/launch/devtools', telemetryProps);
+        // telemetryReporter.sendTelemetryEvent('command/launch/devtools', telemetryProps);
         const runtimeConfig = getRuntimeConfig(config);
         DevToolsPanel.createOrShow(context, telemetryReporter, target.webSocketDebuggerUrl, runtimeConfig);
+        // ScreencastPanel.createOrShow(context, telemetryReporter, target.webSocketDebuggerUrl);
     } else {
         // Launch a new instance
         const browserPath = await getBrowserPath(config);
@@ -549,32 +562,38 @@ export async function launch(context: vscode.ExtensionContext, launchUrl?: strin
                 'in the extension settings panel.');
             return;
         }
-            // Here we grab the last part of the path (using either forward or back slashes to account for mac/win),
-            // Then we search that part for either chrome or edge to best guess identify the browser that is launching.
-            // If it is one of those names we use that, otherwise we default it to "other".
-            // Then we upload just one of those 3 names to telemetry.
-            const exeName = browserPath.split(/\\|\//).pop();
-            if (!exeName) { return; }
-            const match = exeName.match(/(chrome|edge)/gi) || [];
-            const knownBrowser = match.length > 0 ? match[0] : 'other';
-            const browserProps = { exe: `${knownBrowser.toLowerCase()}` };
-            telemetryReporter.sendTelemetryEvent('command/launch/browser', browserProps);
+        // Here we grab the last part of the path (using either forward or back slashes to account for mac/win),
+        // Then we search that part for either chrome or edge to best guess identify the browser that is launching.
+        // If it is one of those names we use that, otherwise we default it to "other".
+        // Then we upload just one of those 3 names to telemetry.
+        const exeName = browserPath.split(/\\|\//).pop();
+        if (!exeName) { return; }
+        const match = exeName.match(/(chrome|edge)/gi) || [];
+        const knownBrowser = match.length > 0 ? match[0] : 'other';
+        const browserProps = { exe: `${knownBrowser.toLowerCase()}` };
+        telemetryReporter.sendTelemetryEvent('command/launch/browser', browserProps);
 
         browserInstance = await launchBrowser(browserPath, port, url, userDataDir);
         if (url !== SETTINGS_DEFAULT_URL) {
             reportUrlType(url, telemetryReporter);
         }
-        browserInstance.on('targetcreated', () => {
+        browserInstance.on('targetcreated', (target: Target) => {
+            console.log(target, target.url(), target.type(), 'browserInstance')
+            const type = target.type();
+            const url = target.url();
+            if (ScreencastPanel.instance && type === 'page') {
+                ScreencastPanel.instance.jumpToNewUrl({ url });
+            }
             cdpTargetsProvider.refresh();
         });
         browserInstance.on('targetdestroyed', () => {
             cdpTargetsProvider.refresh();
         });
-        browserInstance.on('targetchanged',  (target: Target) => {
+        browserInstance.on('targetchanged', (target: Target) => {
             if (target.type() === 'page') {
                 reportUrlType(target.url(), telemetryReporter);
             }
         });
-        await attach(context, url, config);
+        await attach(context, url, config, undefined, screencastOnly);
     }
 }

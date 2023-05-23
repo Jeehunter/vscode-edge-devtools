@@ -39,10 +39,7 @@ export class ScreencastView {
               <button id="reload" title="Reload">
                   <i class="codicon codicon-refresh"></i>
               </button>
-              <input id="url" />
-              <button id="inspect" title="${isDevToolsOpen ? 'Close DevTools' : 'Open DevTools'}">
-                  <i class="codicon codicon-inspect ${isDevToolsOpen ? 'devtools-open' : ''}"></i>
-              </button>
+              <input id="url"/>
           </div>
           <div id="canvas-wrapper">
               <img id="canvas" draggable="false" tabindex="0" />

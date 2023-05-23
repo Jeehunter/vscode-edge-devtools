@@ -131,7 +131,7 @@ export class DevToolsPanel {
         // Update DevTools theme if user changes global theme
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('workbench.colorTheme') &&
-            this.panel.visible) {
+                this.panel.visible) {
                 this.update();
             }
         });
@@ -146,7 +146,7 @@ export class DevToolsPanel {
         if (this.timeStart !== null) {
             const timeEnd = performance.now();
             const sessionTime = timeEnd - this.timeStart;
-            this.telemetryReporter.sendTelemetryEvent('websocket/dispose', undefined, {sessionTime});
+            this.telemetryReporter.sendTelemetryEvent('websocket/dispose', undefined, { sessionTime });
             this.timeStart = null;
         }
 
@@ -202,7 +202,7 @@ export class DevToolsPanel {
         // know in order to enable hover events to be sent through.
         if (message && message.includes('\\"method\\":\\"Overlay.setInspectMode\\"')) {
             try {
-                const cdpMsg = JSON.parse((JSON.parse(message) as {message: string}).message) as {method: string, params: {mode: string} };
+                const cdpMsg = JSON.parse((JSON.parse(message) as { message: string }).message) as { method: string, params: { mode: string } };
                 if (cdpMsg.method === 'Overlay.setInspectMode') {
                     if (cdpMsg.params.mode === 'none') {
                         void vscode.commands.executeCommand(`${SETTINGS_VIEW_NAME}.toggleInspect`, { enabled: false });
@@ -323,8 +323,8 @@ export class DevToolsPanel {
     }
 
     private onSocketOpenUrl(message: string) {
-      const { url } = JSON.parse(message) as { url: string };
-      void vscode.env.openExternal(vscode.Uri.parse(url));
+        const { url } = JSON.parse(message) as { url: string };
+        void vscode.env.openExternal(vscode.Uri.parse(url));
     }
 
     private async onSocketOpenInEditor(message: string) {
@@ -380,15 +380,13 @@ export class DevToolsPanel {
                     const standardizedTextEditorCSSText = textEditorCSSText && textEditorCSSText.replace(/\r\n/g, '\n');
                     canMirror = standardizedMirroredCSStext === standardizedTextEditorCSSText;
                 }
-                if (canMirror)
-                {
+                if (canMirror) {
                     this.mirroredCSS.set(url, newContent);
                     void textEditor.edit(editBuilder => {
                         editBuilder.replace(fullRange, newContent);
                     });
                 }
-                else
-                {
+                else {
                     void this.showCssMirroringWarning();
                 }
             }
@@ -408,9 +406,9 @@ export class DevToolsPanel {
             // Retry connection with fallback.
             const fallbackRevision = this.context.globalState.get<string>('fallbackRevision') ?? '';
             if (this.currentRevision) {
-                this.telemetryReporter.sendTelemetryEvent('websocket/failedConnection', {revision: this.currentRevision});
+                this.telemetryReporter.sendTelemetryEvent('websocket/failedConnection', { revision: this.currentRevision });
             }
-            this.setCdnParameters({revision: fallbackRevision, isHeadless: this.isHeadless});
+            this.setCdnParameters({ revision: fallbackRevision, isHeadless: this.isHeadless });
         }
     }
 
@@ -432,7 +430,7 @@ export class DevToolsPanel {
     private getDocumentFullRange(textEditor: vscode.TextEditor): vscode.Range {
         const firstLine = textEditor.document.lineAt(0);
         const lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
-        const range =  new vscode.Range(firstLine.range.start, lastLine.range.end);
+        const range = new vscode.Range(firstLine.range.start, lastLine.range.end);
         return range;
     }
 
@@ -543,7 +541,7 @@ export class DevToolsPanel {
             `;
     }
 
-    private setCdnParameters(msg: {revision: string, isHeadless: boolean}) {
+    private setCdnParameters(msg: { revision: string, isHeadless: boolean }) {
         this.currentRevision = msg.revision || CDN_FALLBACK_REVISION;
         this.devtoolsBaseUri = `https://devtools.azureedge.net/serve_file/${this.currentRevision}/vscode_app.html`;
         this.isHeadless = msg.isHeadless;
@@ -564,7 +562,7 @@ export class DevToolsPanel {
         const column = vscode.ViewColumn.Beside;
 
         if (DevToolsPanel.instance && DevToolsPanel.instance.targetUrl === targetUrl) {
-                DevToolsPanel.instance.panel.reveal(column);
+            DevToolsPanel.instance.panel.reveal(column);
         } else {
             if (DevToolsPanel.instance) {
                 DevToolsPanel.instance.dispose();
@@ -578,5 +576,40 @@ export class DevToolsPanel {
             DevToolsPanel.instance = new DevToolsPanel(panel, context, telemetryReporter, targetUrl, config);
             ScreencastPanel.instance && ScreencastPanel.instance.update();
         }
+    }
+
+    static showScreencastPanel(
+        context: vscode.ExtensionContext,
+        telemetryReporter: Readonly<TelemetryReporter>,
+        targetUrl: string,
+        config: IRuntimeConfig) {
+
+            const column = vscode.ViewColumn.Beside;
+
+            const panel = vscode.window.createWebviewPanel(SETTINGS_STORE_NAME, SETTINGS_WEBVIEW_NAME, column, {
+                enableCommandUris: true,
+                enableScripts: true,
+                retainContextWhenHidden: true,
+            });
+            panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.png');
+                            
+            // ScreencastPanel.instance && ScreencastPanel.instance.update();
+
+            // if (DevToolsPanel.instance && DevToolsPanel.instance.targetUrl === targetUrl) {
+            //     DevToolsPanel.instance.panel.reveal(column);
+            // } else {
+            //     if (DevToolsPanel.instance) {
+            //         DevToolsPanel.instance.dispose();
+            //     }
+            //     const panel = vscode.window.createWebviewPanel(SETTINGS_STORE_NAME, SETTINGS_WEBVIEW_NAME, column, {
+            //         enableCommandUris: true,
+            //         enableScripts: true,
+            //         retainContextWhenHidden: true,
+            //     });
+            //     panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.png');
+            //     DevToolsPanel.instance = new DevToolsPanel(panel, context, telemetryReporter, targetUrl, config);
+                
+            //     ScreencastPanel.instance && ScreencastPanel.instance.update();
+            // }
     }
 }

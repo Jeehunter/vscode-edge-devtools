@@ -3,7 +3,7 @@
 
 import { encodeMessageForChannel, parseMessageFromChannel } from "../common/webviewEvents";
 
-declare const acquireVsCodeApi: () => {postMessage(message: unknown, args?: any|undefined): void};
+declare const acquireVsCodeApi: () => { postMessage(message: unknown, args?: any | undefined): void };
 export const vscode = acquireVsCodeApi();
 
 interface CdpMessage {
@@ -21,13 +21,14 @@ export class ScreencastCDPConnection {
     private eventCallbackMap: Map<string, CdpEventCallback[]> = new Map();
     private methodCallbackMap: Map<number, CdpMethodCallback> = new Map();
     private clipboardRequests: Set<number> = new Set();
-    private saveToClipboard?: (message: string)=>void;
-    private readClipboardAndPaste?: ()=>void;
+    private saveToClipboard?: (message: string) => void;
+    private readClipboardAndPaste?: () => void;
 
     constructor() {
         // Handle CDP messages/events routed from the extension through post message
         window.addEventListener('message', e => {
             parseMessageFromChannel(e.data, (eventName, args) => {
+
                 if (eventName === 'websocket') {
                     const { message } = JSON.parse(args) as { message: string };
                     if (message) {
@@ -43,7 +44,7 @@ export class ScreencastCDPConnection {
                             this.methodCallbackMap.delete(messageObj.id);
                         }
                         if (this.clipboardRequests.has(messageObj.id) && this.saveToClipboard) {
-                            this.saveToClipboard((messageObj as {result: {result: {value: string}}}).result.result.value);
+                            this.saveToClipboard((messageObj as { result: { result: { value: string } } }).result.result.value);
                             this.clipboardRequests.delete(messageObj.id);
                         }
                     }
@@ -59,6 +60,13 @@ export class ScreencastCDPConnection {
                     const { clipboardText } = JSON.parse(args) as { clipboardText: string };
                     for (const callback of this.eventCallbackMap.get('readClipboard') || []) {
                         callback(clipboardText);
+                    }
+                }
+
+                if (eventName === 'jumpToNewUrl') {
+                    const { message } = JSON.parse(args) as { message: { url: string } };
+                    for (const callback of this.eventCallbackMap.get('jumpToNewUrl') || []) {
+                        callback(message);
                     }
                 }
                 return false;
